@@ -15,26 +15,28 @@ namespace GitImporter
         public LabelFilter(IEnumerable<string> labels)
         {
             _labelsRegexToKeep = new List<Regex>(labels
-                .Where(l => !string.IsNullOrWhiteSpace(l) && l.ToUpper() != "NONE")
-                .Select(l => new Regex(l, RegexOptions.Compiled)));
+                                                 .Where(l => !string.IsNullOrWhiteSpace(l) && l.ToUpper() != "NONE")
+                                                 .Select(l => new Regex(l, RegexOptions.Compiled)));
         }
 
         public bool ShouldKeep(string label)
         {
-            lock (_syncroot)
+            lock(_syncroot)
             {
-                if (_labelsToTrash.Contains(label))
+                if(_labelsToTrash.Contains(label))
                     return false;
-                if (!_labelsToKeep.Contains(label))
+                if(!_labelsToKeep.Contains(label))
                 {
                     // first time seen
-                    if (_labelsRegexToKeep.TrueForAll(r => !r.IsMatch(label)))
+                    if(_labelsRegexToKeep.TrueForAll(r => !r.IsMatch(label)))
                     {
                         _labelsToTrash.Add(label);
                         return false;
                     }
+
                     _labelsToKeep.Add(label);
                 }
+
                 return true;
             }
         }

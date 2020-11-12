@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using ProtoBuf;
 
 namespace GitImporter
@@ -9,22 +10,10 @@ namespace GitImporter
     [ProtoContract]
     public class ElementBranch
     {
+        [ProtoMember(2)]
+        private ElementVersion.Reference _branchingPointReference;
+
         private string _fullName;
-
-        public Element Element { get; private set; }
-        [ProtoMember(1, AsReference = true)]
-        public string BranchName { get; private set; }
-
-        public ElementVersion BranchingPoint { get; private set; }
-        [ProtoMember(2)] private ElementVersion.Reference _branchingPointReference;
-
-        [ProtoMember(3)]
-        public List<ElementVersion> Versions { get; private set; }
-
-        public string FullName
-        {
-            get { return _fullName ?? (_fullName = (BranchingPoint == null ? "" : BranchingPoint.Branch.FullName + "\\") + BranchName); }
-        }
 
         public ElementBranch(Element element, string branchName, ElementVersion branchingPoint)
         {
@@ -36,7 +25,20 @@ namespace GitImporter
 
         // for Protobuf deserialization
         public ElementBranch()
-        {}
+        {
+        }
+
+        public Element Element { get; private set; }
+
+        [ProtoMember(1, AsReference = true)]
+        public string BranchName { get; private set; }
+
+        public ElementVersion BranchingPoint { get; private set; }
+
+        [ProtoMember(3)]
+        public List<ElementVersion> Versions { get; private set; }
+
+        public string FullName => _fullName ?? (_fullName = (BranchingPoint == null ? "" : BranchingPoint.Branch.FullName + "\\") + BranchName);
 
         public override string ToString()
         {
@@ -46,17 +48,17 @@ namespace GitImporter
         [ProtoBeforeSerialization]
         private void BeforeProtobufSerialization()
         {
-            if (BranchingPoint != null)
+            if(BranchingPoint != null)
                 _branchingPointReference = new ElementVersion.Reference(BranchingPoint);
         }
 
         public void Fixup(Element element)
         {
             Element = element;
-            if (BranchingPoint == null && _branchingPointReference != null)
+            if(BranchingPoint == null && _branchingPointReference != null)
                 BranchingPoint = Element.Branches[_branchingPointReference.BranchName].Versions
-                    .First(v => v.VersionNumber == _branchingPointReference.VersionNumber);
-            foreach (var version in Versions)
+                                        .First(v => v.VersionNumber == _branchingPointReference.VersionNumber);
+            foreach(var version in Versions)
                 version.Fixup(this);
         }
     }

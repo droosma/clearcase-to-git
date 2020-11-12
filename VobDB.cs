@@ -2,48 +2,52 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+
 using ProtoBuf;
 
 namespace GitImporter
 {
     [Serializable]
     [ProtoContract]
-    public class VobDB
+    public class VobDb
     {
-        public Dictionary<string, Element> ElementsByOid { get; private set; }
+        [ProtoMember(1)]
+        private List<Element> _rawElements;
 
-        public VobDB(Dictionary<string, Element> elementsByOid, Dictionary<string, LabelMeta> labelMetas)
+        public VobDb(Dictionary<string, Element> elementsByOid, Dictionary<string, LabelMeta> labelMetas)
         {
             ElementsByOid = elementsByOid;
             LabelMetas = labelMetas;
         }
 
-        public VobDB()
+        public VobDb()
         {
             ElementsByOid = new Dictionary<string, Element>();
         }
 
-        public void Add(VobDB other)
+        public Dictionary<string, Element> ElementsByOid { get; private set; }
+
+        [ProtoMember(2)]
+        public Dictionary<string, LabelMeta> LabelMetas { get; private set; }
+
+        public void Add(VobDb other)
         {
-            foreach (var pair in other.ElementsByOid)
+            foreach(var pair in other.ElementsByOid)
             {
                 Element existing;
-                if (!ElementsByOid.TryGetValue(pair.Key, out existing))
+                if(!ElementsByOid.TryGetValue(pair.Key, out existing))
                 {
                     ElementsByOid.Add(pair.Key, pair.Value);
                     continue;
                 }
+
                 // TODO : we should keep the one with the most versions/branches
-                if (existing.Name != pair.Value.Name)
-                    Program.Logger.TraceData(TraceEventType.Information, 0,
-                        string.Format("element with oid {0} has a different name : keeping {1}, ignoring {2}", existing.Oid, existing.Name, pair.Value.Name));
+                if(existing.Name != pair.Value.Name)
+                    Program.Logger.TraceData(TraceEventType.Information,
+                                             0,
+                                             $"element with oid {existing.Oid} has a different name : keeping {existing.Name}, ignoring {pair.Value.Name}");
             }
         }
-
-        [ProtoMember(1)]
-        private List<Element> _rawElements;
-        [ProtoMember(2)]
-        public Dictionary<string, LabelMeta> LabelMetas { get; private set; }
 
         [ProtoBeforeSerialization]
         private void BeforeProtobufSerialization()
@@ -54,22 +58,22 @@ namespace GitImporter
         [ProtoAfterDeserialization]
         private void AfterProtobufDeserialization()
         {
-            if (_rawElements == null)
+            if(_rawElements == null)
             {
                 ElementsByOid = new Dictionary<string, Element>();
                 return;
             }
+
             ElementsByOid = _rawElements.ToDictionary(e => e.Oid);
-            foreach (var element in _rawElements)
+            foreach(var element in _rawElements)
             {
-                var symlink = element as SymLinkElement;
-                if (symlink != null)
+                if(element is SymLinkElement symlink)
                     symlink.Fixup(ElementsByOid);
 
-                foreach (var branch in element.Branches.Values)
-                    foreach (var version in branch.Versions.OfType<DirectoryVersion>())
-                        version.FixContent(ElementsByOid);
+                foreach(var version in element.Branches.Values.SelectMany(branch => branch.Versions.OfType<DirectoryVersion>()))
+                    version.FixContent(ElementsByOid);
             }
+
             _rawElements = null;
         }
     }

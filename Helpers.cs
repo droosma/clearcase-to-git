@@ -4,65 +4,66 @@ namespace GitImporter
 {
     public static class Helpers
     {
-        public static C AddToCollection<K, C, V>(this Dictionary<K, C> dict, K key, V toAdd) where C : ICollection<V>, new()
+        public static TC AddToCollection<TK, TC, TV>(this Dictionary<TK, TC> dict, TK key, TV toAdd) where TC : ICollection<TV>, new()
         {
-            C collection;
-            if (!dict.TryGetValue(key, out collection))
+            TC collection;
+            if(!dict.TryGetValue(key, out collection))
             {
-                collection = new C();
+                collection = new TC();
                 dict.Add(key, collection);
             }
+
             collection.Add(toAdd);
             return collection;
         }
 
-        public static bool RemoveFromCollection<K, C, V>(this Dictionary<K, C> dict, K key, V toRemove) where C : ICollection<V>, new()
+        public static bool RemoveFromCollection<TK, TC, TV>(this Dictionary<TK, TC> dict, TK key, TV toRemove) where TC : ICollection<TV>, new()
         {
-            C collection;
-            if (!dict.TryGetValue(key, out collection))
+            TC collection;
+            if(!dict.TryGetValue(key, out collection))
                 return false;
             bool removed = collection.Remove(toRemove);
-            if (collection.Count == 0)
+            if(collection.Count == 0)
                 dict.Remove(key);
             return removed;
         }
 
-        public static C AddToCollection<K, C, V>(this List<KeyValuePair<K, C>> dict, K key, V toAdd) where C : ICollection<V>, new()
+        public static TC AddToCollection<TK, TC, TV>(this List<KeyValuePair<TK, TC>> dict, TK key, TV toAdd) where TC : ICollection<TV>, new()
         {
-            C collection = default(C);
-            foreach (var pair in dict)
-                if (pair.Key.Equals(key))
+            TC collection = default;
+            foreach(var pair in dict)
+                if(pair.Key.Equals(key))
                 {
                     collection = pair.Value;
                     break;
                 }
 
-            if (Equals(collection, default(C)))
+            if(Equals(collection, default(TC)))
             {
-                collection = new C();
-                dict.Add(new KeyValuePair<K, C>(key, collection));
+                collection = new TC();
+                dict.Add(new KeyValuePair<TK, TC>(key, collection));
             }
 
             collection.Add(toAdd);
             return collection;
         }
 
-        public static bool RemoveFromCollection<K, C, V>(this List<KeyValuePair<K, C>> dict, K key, V toRemove) where C : ICollection<V>, new()
+        public static bool RemoveFromCollection<TK, TC, TV>(this List<KeyValuePair<TK, TC>> dict, TK key, TV toRemove) where TC : ICollection<TV>, new()
         {
-            C collection = default(C);
+            TC collection = default;
             int index;
-            for (index = 0; index < dict.Count; index++)
-                if (dict[index].Key.Equals(key))
+            for(index = 0;index < dict.Count;index++)
+                if(dict[index].Key.Equals(key))
                 {
                     collection = dict[index].Value;
                     break;
                 }
 
-            if (Equals(collection, default(C)))
+            if(Equals(collection, default(TC)))
                 return false;
-            
+
             bool removed = collection.Remove(toRemove);
-            if (collection.Count == 0)
+            if(collection.Count == 0)
                 dict.RemoveAt(index);
             return removed;
         }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using ProtoBuf;
 
 namespace GitImporter
@@ -9,14 +10,8 @@ namespace GitImporter
     [ProtoContract, ProtoInclude(100, typeof(SymLinkElement))]
     public class Element
     {
-        [ProtoMember(1)]
-        public string Name { get; set; }
-        [ProtoMember(2)]
-        public bool IsDirectory { get; private set; }
-        [ProtoMember(3)]
-        public string Oid { get; set; }
-
-        public Dictionary<string, ElementBranch> Branches { get; private set; }
+        [ProtoMember(4)]
+        private List<ElementBranch> _rawElementsBranches;
 
         // we don't have the oid when reading from an export file, it is filled in later
         public Element(string name, bool isDirectory)
@@ -28,12 +23,24 @@ namespace GitImporter
 
         // for Protobuf deserialization
         public Element()
-        {}
+        {
+        }
+
+        [ProtoMember(1)]
+        public string Name { get; set; }
+
+        [ProtoMember(2)]
+        public bool IsDirectory { get; private set; }
+
+        [ProtoMember(3)]
+        public string Oid { get; set; }
+
+        public Dictionary<string, ElementBranch> Branches { get; private set; }
 
         public ElementVersion GetVersion(string branchName, int versionNumber)
         {
             ElementBranch branch;
-            if (!Branches.TryGetValue(branchName, out branch))
+            if(!Branches.TryGetValue(branchName, out branch))
                 return null;
             // could be faster with a List.BinarySearch
             return branch.Versions.FirstOrDefault(v => v.VersionNumber == versionNumber);
@@ -43,9 +50,6 @@ namespace GitImporter
         {
             return Name;
         }
-
-        [ProtoMember(4)]
-        private List<ElementBranch> _rawElementsBranches;
 
         [ProtoBeforeSerialization]
         private void BeforeProtobufSerialization()
@@ -57,14 +61,14 @@ namespace GitImporter
         private void AfterProtobufDeserialization()
         {
             // no branches in SymLinkElement
-            if (_rawElementsBranches != null)
+            if(_rawElementsBranches != null)
             {
                 Branches = _rawElementsBranches.ToDictionary(b => b.BranchName);
-                foreach (var branch in _rawElementsBranches)
+                foreach(var branch in _rawElementsBranches)
                 {
                     // empty branch possible if all versions were too recent
                     // in this case, protobuf leaves a null Versions property
-                    if (branch.Versions == null)
+                    if(branch.Versions == null)
                         Branches.Remove(branch.BranchName);
                     else
                         branch.Fixup(this);
