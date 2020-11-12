@@ -11,7 +11,7 @@ namespace GitImporter
     {
         public const string Symlink = "symlink:";
 
-        [ProtoMember(1, AsReference = true)]
+        [ProtoMember(1)]
         private string _directoryOid;
 
         public SymLinkElement(Element directory, string name)
@@ -29,7 +29,7 @@ namespace GitImporter
 
         public Element Directory { get; private set; }
 
-        [ProtoMember(2, AsReference = true)]
+        [ProtoMember(2)]
         public string Target { get; private set; }
 
         [ProtoBeforeSerialization]

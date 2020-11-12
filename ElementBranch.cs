@@ -30,7 +30,7 @@ namespace GitImporter
 
         public Element Element { get; private set; }
 
-        [ProtoMember(1, AsReference = true)]
+        [ProtoMember(1)]
         public string BranchName { get; private set; }
 
         public ElementVersion BranchingPoint { get; private set; }
@@ -38,7 +38,7 @@ namespace GitImporter
         [ProtoMember(3)]
         public List<ElementVersion> Versions { get; private set; }
 
-        public string FullName => _fullName ?? (_fullName = (BranchingPoint == null ? "" : BranchingPoint.Branch.FullName + "\\") + BranchName);
+        public string FullName => _fullName ??= (BranchingPoint == null ? "" : BranchingPoint.Branch.FullName + "\\") + BranchName;
 
         public override string ToString()
         {

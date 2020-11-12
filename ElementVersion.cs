@@ -36,31 +36,31 @@ namespace GitImporter
         [ProtoMember(1)]
         public int VersionNumber { get; private set; }
 
-        [ProtoMember(2, AsReference = true)]
+        [ProtoMember(2)]
         public string AuthorName { get; set; }
 
-        [ProtoMember(3, AsReference = true)]
+        [ProtoMember(3)]
         public string AuthorLogin { get; set; }
 
         [ProtoMember(4)]
         public DateTime Date { get; set; }
 
-        [ProtoMember(5, AsReference = true)]
+        [ProtoMember(5)]
         public string Comment { get; set; }
 
         public List<ElementVersion> MergesFrom { get; private set; }
         public List<ElementVersion> MergesTo { get; private set; }
 
-        [ProtoMember(6, AsReference = true)]
+        [ProtoMember(6)]
         public List<string> Labels { get; private set; }
 
         public string VersionPath => "\\" + Branch.FullName + "\\" + VersionNumber;
 
         public ElementVersion GetPreviousVersion()
         {
-            if(VersionNumber == 0)
-                return Branch.BranchingPoint; // null for "main"
-            return Branch.Versions[Branch.Versions.IndexOf(this) - 1];
+            return VersionNumber == 0 
+                       ? Branch.BranchingPoint 
+                       : Branch.Versions[Branch.Versions.IndexOf(this) - 1];
         }
 
         public bool IsAncestorOf(ElementVersion version)
@@ -109,10 +109,10 @@ namespace GitImporter
         [ProtoContract]
         public class Reference
         {
-            [ProtoMember(2, AsReference = true)]
+            [ProtoMember(2)]
             public string BranchName;
 
-            [ProtoMember(1, AsReference = true)]
+            [ProtoMember(1)]
             public string ElementOid;
 
             [ProtoMember(3)]
